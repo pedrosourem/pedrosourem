@@ -141,4 +141,4 @@ FROM cte
 WHERE customer_id = "A" OR customer_id = "B"
 GROUP BY customer_id;
 
-# In this case, Customer A had more points than customer B in the month of January.
+# In this case, Customer A had more points than customer B in January.
