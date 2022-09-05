@@ -1,3 +1,3 @@
-My name is Pedro Souto Ourem.
+This is the branch of the SQL 8weekschallenge by Danny Ma.
 
-I am a Chemical Engineer working on breaking into Data Analytics.
+I am enjoying practicing SQL through these challenges. 
