@@ -1,0 +1,99 @@
+-- 1. How many pizzas were ordered?
+SELECT COUNT(order_id) AS total_pizza_ordered
+FROM customer_orders; 
+
+-- 2. How many unique customer orders were made?
+SELECT COUNT(DISTINCT(order_id)) AS orders_amount
+FROM customer_orders;
+
+-- 3. How many successful orders were delivered by each runner?
+WITH CTE AS 
+	(SELECT r.order_id, r.runner_id, 
+		      COUNT(*) AS pizza_quantity_delivered
+	 FROM customer_orders AS c
+	 LEFT JOIN runner_orders AS r
+	 ON c.order_id = r.order_id
+	 WHERE r.cancellation IS NULL
+	 GROUP BY r.order_id)
+SELECT runner_id,
+	     COUNT(*) AS orders_delivered
+FROM CTE
+GROUP BY runner_id;
+
+-- 4.How many of each type of pizza was delivered?
+SELECT c.pizza_id, 
+	     p.pizza_name, 
+       COUNT(*) AS pizza_quantity_delivered
+FROM customer_orders AS c
+LEFT JOIN runner_orders AS r
+ON c.order_id = r.order_id
+LEFT JOIN pizza_names AS p
+ON c.pizza_id = p.pizza_id
+WHERE r.cancellation IS NULL
+GROUP BY c.pizza_id;
+
+-- 5. How many Vegetarian and Meatlovers were ordered by each customer?
+SELECT c.customer_id, 
+       p.pizza_name,
+       COUNT(*) AS pizza_quantity_ordered
+FROM customer_orders AS c
+LEFT JOIN pizza_names AS p
+ON c.pizza_id = p.pizza_id
+GROUP BY customer_id, p.pizza_id
+ORDER BY customer_id;
+
+
+-- 6. What was the maximum number of pizzas delivered in a single order?
+SELECT c.order_id,
+	     COUNT(*) pizza_quantity_delivered
+FROM customer_orders AS c
+LEFT JOIN runner_orders AS r
+ON c.order_id = r.order_id
+WHERE r.cancellation IS NULL
+GROUP BY c.order_id;
+
+-- 7. For each customer, how many delivered pizzas had at least 1 change and how many had no changes?
+WITH cte AS 
+(SELECT c.*, 
+		    CASE 
+		      WHEN exclusions OR extras IS NOT NULL THEN 1 ELSE 0 END AS atleast_1_change,
+		    CASE 
+		      WHEN exclusions OR extras IS NULL THEN 1 ELSE 0 END AS no_change
+ FROM customer_orders AS c
+ LEFT JOIN runner_orders AS r
+ ON c.order_id = r.order_id
+ WHERE r.cancellation IS NULL)
+SELECT customer_id,
+	     SUM(atleast_1_change) AS pizza_delivered_with_changes,
+	     SUM(no_change) AS pizza_delivered_unchanged
+FROM cte
+GROUP BY customer_id;
+
+-- 8. How many pizzas were delivered that had both exclusions and extras?
+WITH cte AS 
+  (SELECT c.*, 
+		      CASE 
+			      WHEN exclusions AND extras IS NOT NULL THEN 1 ELSE 0 END AS exclusions_extras
+	 FROM customer_orders AS c
+	 LEFT JOIN runner_orders AS r
+	 ON c.order_id = r.order_id
+	 WHERE r.cancellation IS NULL)
+SELECT order_id,
+       customer_id, 
+       COUNT(*) AS pizza_delivered_with_exclusions_extras
+FROM cte
+WHERE exclusions_extras = 1;
+
+-- 9. What was the total volume of pizzas ordered for each hour of the day?
+SELECT DAY(order_time) AS day_number, 
+	     HOUR(order_time) AS hour_of_the_day,
+       COUNT(*) AS pizza_quantity_ordered
+FROM customer_orders
+GROUP BY hour_of_the_day, day_number;
+
+-- 10. What was the volume of orders for each day of the week?
+SELECT WEEK(order_time) + 1 AS week_number,
+	     WEEKDAY(order_time) AS week_day, 
+       COUNT(*) AS pizza_quantity_ordered
+FROM customer_orders
+GROUP BY week_number, week_day;
